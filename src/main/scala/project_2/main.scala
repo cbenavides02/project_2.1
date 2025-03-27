@@ -86,7 +86,9 @@ object main {
 
   // Helper function: compute one trial estimate using a BJKST sketch.
   def computeTrialEstimate(x: RDD[String], width: Int): Double = {
+    // Create a new hash function for this trial.
     val h = new hash_function(2147483587)
+    // Use aggregate to compute the k smallest normalized hash values.
     val zero: List[Double] = List.empty[Double]
     def seqOp(acc: List[Double], s: String): List[Double] = {
       val r = h.hash(s).toDouble / h.p.toDouble
@@ -153,8 +155,9 @@ object main {
       row.sum.toDouble / width
     }
     val sortedMeans = rowMeans.sorted
-    val median: Double = if (depth % 2 == 1) sortedMeans(depth / 2)
-                          else (sortedMeans(depth / 2 - 1) + sortedMeans(depth / 2)) / 2.0
+    val median: Double =
+      if (depth % 2 == 1) sortedMeans(depth / 2)
+      else (sortedMeans(depth / 2 - 1) + sortedMeans(depth / 2)) / 2.0
     median.toLong
   }
 
@@ -162,9 +165,9 @@ object main {
 
   def exact_F2(x: RDD[String]): Long = {
     x.map(i => (i, 1L))
-     .reduceByKey(_ + _)
-     .map { case (_, count) => count * count }
-     .reduce(_ + _)
+      .reduceByKey(_ + _)
+      .map { case (_, count) => count * count }
+      .reduce(_ + _)
   }
 
   def main(args: Array[String]): Unit = {
@@ -189,9 +192,9 @@ object main {
       val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
 
       println("==================================")
-      println("BJKST Algorithm. Bucket Size: " + args(2) +
-              ". Trials: " + args(3) +
-              ". Time elapsed: " + durationSeconds + "s. Estimate: " + ans)
+      println("BJKST Algorithm. Bucket Size:" + args(2) +
+              ". Trials:" + args(3) +
+              ". Time elapsed:" + durationSeconds + "s. Estimate: " + ans)
       println("==================================")
     } else if (args(1) == "tidemark") {
       if (args.length != 3) {
@@ -203,8 +206,8 @@ object main {
       val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
 
       println("==================================")
-      println("Tidemark Algorithm. Trials: " + args(2) +
-              ". Time elapsed: " + durationSeconds + "s. Estimate: " + ans)
+      println("Tidemark Algorithm. Trials:" + args(2) +
+              ". Time elapsed:" + durationSeconds + "s. Estimate: " + ans)
       println("==================================")
     } else if (args(1) == "ToW") {
       if (args.length != 4) {
@@ -216,9 +219,9 @@ object main {
       val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
 
       println("==================================")
-      println("Tug-of-War F2 Approximation. Width: " + args(2) +
-              ". Depth: " + args(3) +
-              ". Time elapsed: " + durationSeconds + "s. Estimate: " + ans)
+      println("Tug-of-War F2 Approximation. Width:" + args(2) +
+              ". Depth:" + args(3) +
+              ". Time elapsed:" + durationSeconds + "s. Estimate: " + ans)
       println("==================================")
     } else if (args(1) == "exactF2") {
       if (args.length != 2) {
@@ -230,7 +233,7 @@ object main {
       val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
 
       println("==================================")
-      println("Exact F2. Time elapsed: " + durationSeconds + "s. Estimate: " + ans)
+      println("Exact F2. Time elapsed:" + durationSeconds + "s. Estimate: " + ans)
       println("==================================")
     } else if (args(1) == "exactF0") {
       if (args.length != 2) {
@@ -242,7 +245,7 @@ object main {
       val durationSeconds = (endTimeMillis - startTimeMillis) / 1000
 
       println("==================================")
-      println("Exact F0. Time elapsed: " + durationSeconds + "s. Estimate: " + ans)
+      println("Exact F0. Time elapsed:" + durationSeconds + "s. Estimate: " + ans)
       println("==================================")
     } else {
       println("Usage: project_2 input_path option = {BJKST, tidemark, ToW, exactF2, exactF0}")
