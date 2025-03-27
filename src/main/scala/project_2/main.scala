@@ -88,28 +88,45 @@ object main {
   def computeTrialEstimate(x: RDD[String], width: Int): Double = {
     // Create a new hash function for this trial.
     val h = new hash_function(2147483587)
-    // Aggregate the k smallest normalized hash values.
     val zero: List[Double] = List.empty[Double]
+    
+    // Define the sequence operation and combiner for aggregation.
     def seqOp(acc: List[Double], s: String): List[Double] = {
       val r = h.hash(s).toDouble / h.p.toDouble
+      println(s"Hash value for $s: $r")  // Debugging line
       (r :: acc).sorted.take(width)
     }
+    
     def combOp(acc1: List[Double], acc2: List[Double]): List[Double] = {
       (acc1 ++ acc2).sorted.take(width)
     }
+    
     val minSet = x.aggregate(zero)(seqOp, combOp)
-    if (minSet.size < width || minSet.isEmpty) 0.0 else width / minSet.last
+    println(s"minSet: $minSet")  // Debugging line
+
+    if (minSet.size < width || minSet.isEmpty) {
+      println("minSet is empty or too small, returning 0.0")  // Debugging line
+      return 0.0
+    } 
+    width / minSet.last
   }
 
   // BJKST function: run "trials" independent sketches and return the median estimate.
   def BJKST(x: RDD[String], width: Int, trials: Int): Double = {
     val estimates = (1 to trials).map { _ =>
-      computeTrialEstimate(x, width)
+      val estimate = computeTrialEstimate(x, width)
+      println(s"Trial estimate: $estimate")  // Debugging line
+      estimate
     }.filter(_ > 0).toList
 
-    if (estimates.isEmpty) 0.0
-    else {
+    println(s"Estimates before filtering: ${estimates}")  // Debugging line
+
+    if (estimates.isEmpty) {
+      println("No valid estimates generated. Returning 0.0.")  // Debugging line
+      0.0
+    } else {
       val sortedEstimates = estimates.sorted
+      println(s"Sorted estimates: $sortedEstimates")  // Debugging line
       val n = sortedEstimates.size
       if (n % 2 == 1) sortedEstimates(n / 2)
       else (sortedEstimates(n / 2 - 1) + sortedEstimates(n / 2)) / 2.0
@@ -122,6 +139,7 @@ object main {
       Seq.range(0, trials).map(i => scala.math.max(accu1(i), accu2(i)))
     def param1 = (accu1: Seq[Int], s: String) => 
       Seq.range(0, trials).map(i => scala.math.max(accu1(i), h(i).zeroes(h(i).hash(s))))
+    
     val x3 = x.aggregate(Seq.fill(trials)(0))(param1, param0)
     val ans = x3.map(z => scala.math.pow(2, 0.5 + z)).sorted
     ans(trials / 2)
