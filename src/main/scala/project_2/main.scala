@@ -38,7 +38,7 @@ object main {
   }
 
   class four_universal_Radamacher_hash_function extends hash_function(2) {
-    // A 4-universal hash family; numBuckets_in = 2.
+    // A 4-universal hash family; numBuckets_in is fixed to 2.
     override val a: Long = (rand.nextLong % p)
     override val b: Long = (rand.nextLong % p)
     val c: Long = (rand.nextLong % p)
@@ -88,7 +88,7 @@ object main {
   def computeTrialEstimate(x: RDD[String], width: Int): Double = {
     // Create a new hash function for this trial.
     val h = new hash_function(2147483587)
-    // Use aggregate to compute the k smallest normalized hash values.
+    // Aggregate the k smallest normalized hash values.
     val zero: List[Double] = List.empty[Double]
     def seqOp(acc: List[Double], s: String): List[Double] = {
       val r = h.hash(s).toDouble / h.p.toDouble
@@ -118,8 +118,10 @@ object main {
 
   def tidemark(x: RDD[String], trials: Int): Double = {
     val h = Seq.fill(trials)(new hash_function(2000000000))
-    def param0 = (accu1: Seq[Int], accu2: Seq[Int]) => Seq.range(0, trials).map(i => scala.math.max(accu1(i), accu2(i)))
-    def param1 = (accu1: Seq[Int], s: String) => Seq.range(0, trials).map(i => scala.math.max(accu1(i), h(i).zeroes(h(i).hash(s))))
+    def param0 = (accu1: Seq[Int], accu2: Seq[Int]) => 
+      Seq.range(0, trials).map(i => scala.math.max(accu1(i), accu2(i)))
+    def param1 = (accu1: Seq[Int], s: String) => 
+      Seq.range(0, trials).map(i => scala.math.max(accu1(i), h(i).zeroes(h(i).hash(s))))
     val x3 = x.aggregate(Seq.fill(trials)(0))(param1, param0)
     val ans = x3.map(z => scala.math.pow(2, 0.5 + z)).sorted
     ans(trials / 2)
@@ -165,9 +167,9 @@ object main {
 
   def exact_F2(x: RDD[String]): Long = {
     x.map(i => (i, 1L))
-      .reduceByKey(_ + _)
-      .map { case (_, count) => count * count }
-      .reduce(_ + _)
+     .reduceByKey(_ + _)
+     .map { case (_, count) => count * count }
+     .reduce(_ + _)
   }
 
   def main(args: Array[String]): Unit = {
